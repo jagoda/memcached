@@ -30,6 +30,8 @@ package "libmemcache-dev" do
   case node['platform_family']
   when "rhel", "fedora"
     package_name "libmemcached"
+  when "smartos"
+    package_name "libmemcached"
   else
     package_name "libmemcache-dev"
   end
@@ -57,6 +59,12 @@ when "rhel", "fedora"
     )
     notifies :restart, "service[memcached]"
   end
+when "smartos"
+  # SMF directly configures memcached with no opportunity to alter settings
+  # If you need custom parameters, use the memcached_instance provider
+  service "memcached" do
+    action :enable
+  end
 else
   template "/etc/memcached.conf" do
     source "memcached.conf.erb"
@@ -70,17 +78,6 @@ else
       :maxconn => node['memcached']['maxconn'],
       :memory => node['memcached']['memory']
     )
-    notifies :restart, "service[memcached]"
-  end
-end
-
-case node['lsb']['codename']
-when "karmic"
-  template "/etc/default/memcached" do
-    source "memcached.default.erb"
-    owner "root"
-    group "root"
-    mode 00644
     notifies :restart, "service[memcached]"
   end
 end
